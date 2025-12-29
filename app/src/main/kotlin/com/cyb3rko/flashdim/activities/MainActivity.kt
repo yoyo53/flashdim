@@ -150,7 +150,7 @@ class MainActivity : AppCompatActivity() {
         camera.sendLightLevel(this, currentLevel, newLevel, torchPreactivation)
         updateLightLevelView(if (newLevel > 0) newLevel else 0)
         binding.seekBar.setProgress(if (newLevel > 0) newLevel else 0)
-        currentLevel = newLevel
+        setCurrentLevel(newLevel)
     }
 
     override fun onPause() {
@@ -180,11 +180,11 @@ class MainActivity : AppCompatActivity() {
                         camera.sendLightLevel(this@MainActivity, currentLevel, maxLevel, torchPreactivation)
                         updateLightLevelView(maxLevel)
                     }
-                    currentLevel = progress
+                    setCurrentLevel(progress)
                 } else if (progress == 0) {
                     camera.setTorchMode(false)
                     updateLightLevelView(0)
-                    currentLevel = 0
+                    setCurrentLevel(0)
                 }
             }
         }
@@ -216,7 +216,7 @@ class MainActivity : AppCompatActivity() {
                 if (isDimAllowed()) {
                     updateLightLevelView(maxLevel)
                     camera.sendLightLevel(this@MainActivity, currentLevel, maxLevel, torchPreactivation)
-                    currentLevel = maxLevel
+                    setCurrentLevel(maxLevel)
                     seekBar.setProgress(maxLevel)
                 } else {
                     camera.setTorchMode(true)
@@ -226,14 +226,14 @@ class MainActivity : AppCompatActivity() {
                 if (vibrateButtons) Vibrator.vibrateClick()
                 updateLightLevelView(maxLevel / 2)
                 camera.sendLightLevel(this@MainActivity, currentLevel, maxLevel / 2, torchPreactivation)
-                currentLevel = maxLevel / 2
+                setCurrentLevel(maxLevel / 2)
                 seekBar.setProgress(maxLevel / 2)
             }
             minButton.setOnClickListener {
                 if (vibrateButtons) Vibrator.vibrateClick()
                 updateLightLevelView(1)
                 camera.sendLightLevel(this@MainActivity, currentLevel, 1, torchPreactivation)
-                currentLevel = 1
+                setCurrentLevel(1)
                 seekBar.setProgress(1)
             }
             offButton.setOnClickListener {
@@ -241,7 +241,7 @@ class MainActivity : AppCompatActivity() {
                 morseActivated = false
                 if (isDimAllowed()) {
                     updateLightLevelView(0)
-                    currentLevel = 0
+                    setCurrentLevel(0)
                     seekBar.setProgress(0)
                 }
                 camera.setTorchMode(false)
@@ -413,6 +413,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isDimAllowed() = binding.maxButton.text == getString(R.string.button_max_maximum)
+
+    private fun setCurrentLevel(level: Int) {
+        currentLevel = level
+        Safe.writeInt(Safe.TORCH_CURRENT_LEVEL, level)
+    }
 
     private fun handleMorseCall(message: String) {
         val morseExceptionHandler = CoroutineExceptionHandler { _, error ->

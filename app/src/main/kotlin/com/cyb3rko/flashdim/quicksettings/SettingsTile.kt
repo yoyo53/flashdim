@@ -84,6 +84,7 @@ class SettingsTile : TileService() {
                     Safe.initialize(applicationContext)
                     Safe.writeBoolean(Safe.FLASH_ACTIVE, enabled)
                     this@SettingsTile.enabled = enabled
+                    if (!enabled) Safe.writeInt(Safe.TORCH_CURRENT_LEVEL, 0)
                     qsTile.state = if (enabled) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                     qsTile.updateTile()
                 }
@@ -117,11 +118,13 @@ class SettingsTile : TileService() {
     private fun actAsToggle() {
         var level = -1
         var preactivate = false
+        var currentLevel = 0
         try {
             if (Safe.getBoolean(Safe.QUICK_SETTINGS_LINK, false)) {
                 level = Safe.getInt(Safe.PREFERRED_LEVEL, 1)
             }
             preactivate = Safe.getBoolean(Safe.TORCH_PREACTIVATION, false)
+            currentLevel = Safe.getInt(Safe.TORCH_CURRENT_LEVEL, 0)
         } catch (_: Exception) {
             Log.e("FlashDim", "Safe operations failed in SettingsTile")
         }
@@ -134,10 +137,9 @@ class SettingsTile : TileService() {
             }
             cameraManager?.let {
                 Log.d("FlashDim", "Toggling flashlight from SettingsTile (toggle)")
-                when (qsTile.state) {
-                    Tile.STATE_INACTIVE -> sendFlashlightSignal(it, level, true, preactivate)
-                    Tile.STATE_ACTIVE -> sendFlashlightSignal(it, level, false, preactivate)
-                }
+                val activate = !enabled || (level > 0 && currentLevel != level)
+                sendFlashlightSignal(it, level, activate, preactivate)
+                Safe.writeInt(Safe.TORCH_CURRENT_LEVEL, level)
             }
         } catch (e: Exception) {
             Log.e("FlashDim", "Camera access failed in SettingsFilel (toggle)")
@@ -184,6 +186,7 @@ class SettingsTile : TileService() {
             cameraManager?.let {
                 Log.d("FlashDim", "Dimming flashlight from SettingsTile (dimmer)")
                 sendFlashlightSignal(it, newLevel, newLevel != DIMMER_OFF, preactivate)
+                Safe.writeInt(Safe.TORCH_CURRENT_LEVEL, newLevel)
             }
         } catch (e: Exception) {
             Log.e("FlashDim", "Camera access failed in SettingsTile (dimmer")
