@@ -117,7 +117,7 @@ internal object IntervalDialog {
         validateBpm(input)
     }
 
-    private fun validateTime(time: String) = time.toInt() in 200..10000
+    private fun validateTime(time: String) = time.toInt() in 10..60000
 
-    private fun validateBpm(bpm: String) = bpm.toInt() in 10..200
+    private fun validateBpm(bpm: String) = bpm.toInt() in 1..6000
 }
